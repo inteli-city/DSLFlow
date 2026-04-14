@@ -1,0 +1,19 @@
+# ── Git metadata ──────────────────────────────────────────────────────────────
+.git
+
+# ── Runtime data — belongs on the host bind mount, never in the image ─────────
+dslflow_data/
+
+# ── Build artefacts ───────────────────────────────────────────────────────────
+node_modules/
+venv/
+
+# ── Node-RED runtime files (must not enter image build context) ───────────────
+.config.*.json
+.config.*.json.backup
+projects/
+lib/
+
+# ── Noise ─────────────────────────────────────────────────────────────────────
+*.log
+*.backup

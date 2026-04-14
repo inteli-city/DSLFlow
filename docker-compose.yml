@@ -1,0 +1,21 @@
+services:
+  dslflow:
+    build: .
+    image: dslflow:latest
+    container_name: dslflow
+    ports:
+      - "1995:1995"
+    volumes:
+      # Bind mount — all Node-RED state is visible and accessible on the host.
+      # The entrypoint fixes ownership so node-red can write here regardless
+      # of how Docker created the directory.
+      - ./dslflow_data:/data
+    environment:
+      - PORT=1995
+      - NODE_OPTIONS=--max-old-space-size=4096
+    mem_limit: 5g
+    shm_size: '256m'     # Chrome uses /dev/shm; Docker's 64 MB default causes tab crashes
+    restart: unless-stopped
+    # Load config from /app (image layer), not from /data (bind mount).
+    # The base entrypoint appends these args to its fixed --userDir /data call.
+    command: ["--settings", "/app/settings.js"]

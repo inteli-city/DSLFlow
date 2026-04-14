@@ -1,0 +1,27 @@
+:root {
+  /* === Brand (primary) === */
+  --dslflow-primary: #6D28D9;          /* base */
+  --dslflow-primary-hover: #5B21B6;    /* hover */
+  --dslflow-primary-active: #4C1D95;   /* pressed */
+
+  /* === Subtle accent (less aggressive usage) === */
+  --dslflow-accent-soft: #8B5CF6;      /* for highlights, not buttons */
+
+  /* === Neutral UI support === */
+  --dslflow-focus-ring: rgba(109, 40, 217, 0.35);
+
+  /* === Node-RED mappings === */
+  --red-ui-header-accent: var(--dslflow-primary);
+
+  --red-ui-deploy-button-background: var(--dslflow-primary);
+  --red-ui-deploy-button-background-hover: var(--dslflow-primary-hover);
+  --red-ui-deploy-button-background-active: var(--dslflow-primary-active);
+
+  --red-ui-workspace-button-background-primary: var(--dslflow-primary);
+  --red-ui-workspace-button-background-primary-hover: var(--dslflow-primary-hover);
+}
+
+/* Deploy menu icons: shift SVG fill toward violet */
+#red-ui-header ul#red-ui-header-button-deploy-options-submenu li a img {
+  filter: hue-rotate(270deg) saturate(1.3);
+}
