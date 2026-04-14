@@ -91,17 +91,20 @@ module.exports = {
  *  - httpStaticAuth
  ******************************************************************************/
 
-    /** To password protect the Node-RED editor and admin API, the following
-     * property can be used. See https://nodered.org/docs/security.html for details.
+    /** DSLFlow mandatory authentication.
+     * Credentials are read exclusively from environment variables.
+     * NODE_RED_ADMIN_USER and NODE_RED_ADMIN_PASSWORD_HASH must be set.
+     * The entrypoint fails immediately if either is missing — there is no
+     * insecure fallback and no dev-mode bypass.
      */
-    //adminAuth: {
-    //    type: "credentials",
-    //    users: [{
-    //        username: "admin",
-    //        password: "$2a$08$zZWtXTja0fB1pzD4sHCMyOCMYz2Z6dNbM6tl8sJogENOMcxWV9DN.",
-    //        permissions: "*"
-    //    }]
-    //},
+    adminAuth: {
+        type: "credentials",
+        users: [{
+            username: process.env.NODE_RED_ADMIN_USER,
+            password: process.env.NODE_RED_ADMIN_PASSWORD_HASH,
+            permissions: "*"
+        }]
+    },
 
     /** The following property can be used to enable HTTPS
      * This property can be either an object, containing both a (private) key

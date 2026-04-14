@@ -4,7 +4,7 @@ services:
     image: dslflow:latest
     container_name: dslflow
     ports:
-      - "1995:1995"
+      - "2000:1995"
     volumes:
       # Bind mount — all Node-RED state is visible and accessible on the host.
       # The entrypoint fixes ownership so node-red can write here regardless
@@ -13,6 +13,10 @@ services:
     environment:
       - PORT=1995
       - NODE_OPTIONS=--max-old-space-size=4096
+      # Mandatory auth credentials — loaded from .env (see .env.example).
+      # The container will not start if either variable is unset.
+      - NODE_RED_ADMIN_USER
+      - NODE_RED_ADMIN_PASSWORD_HASH
     mem_limit: 5g
     shm_size: '256m'     # Chrome uses /dev/shm; Docker's 64 MB default causes tab crashes
     restart: unless-stopped

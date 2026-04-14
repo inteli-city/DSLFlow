@@ -23,6 +23,16 @@
 #
 set -e
 
+# ── Authentication guard ───────────────────────────────────────────────────────
+# NODE_RED_ADMIN_USER and NODE_RED_ADMIN_PASSWORD_HASH are mandatory.
+# There is no insecure fallback — if either is missing the container must not
+# start, because Node-RED would be reachable without any access control.
+if [ -z "${NODE_RED_ADMIN_USER}" ] || [ -z "${NODE_RED_ADMIN_PASSWORD_HASH}" ]; then
+    echo "[dslflow] ERROR: NODE_RED_ADMIN_USER and NODE_RED_ADMIN_PASSWORD_HASH must be set."
+    echo "[dslflow]        Copy .env.example to .env, set your credentials, then restart."
+    exit 1
+fi
+
 # Fix ownership of the bind-mounted data directory.
 # This is a no-op if the directory is already owned by node-red.
 chown -R node-red:node-red /data
