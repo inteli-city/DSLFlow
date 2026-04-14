@@ -12,6 +12,7 @@ A customized, containerized Node-RED environment with violet branding, Git-based
 - [Project Structure](#project-structure)
 - [Authentication](#authentication)
 - [Getting Started](#getting-started)
+- [Compose Files](#compose-files)
 - [Development Workflow](#development-workflow)
 - [Dependency Management](#dependency-management)
 - [Theming & Branding](#theming--branding)
@@ -98,18 +99,20 @@ Cloning this repository and running `docker compose up` produces a working Node-
 
 ```
 .
-├── Dockerfile              # Image definition (environment only — no state)
-├── docker-compose.yml      # Volume, ports, memory, restart policy
-├── settings.js             # Node-RED runtime and editor configuration
-├── package.json            # Node-RED node dependencies
-├── package-lock.json       # Locked dependency tree
-├── .gitignore              # Excludes all runtime state from the repo
-├── .dockerignore           # Excludes runtime state from the build context
+├── Dockerfile                  # Image definition (environment only — no state)
+├── docker-compose.yml          # Build image + run container (default entry point)
+├── docker-compose-reuse.yml    # Run container using an already-built image
+├── settings.js                 # Node-RED runtime and editor configuration
+├── package.json                # Node-RED node dependencies
+├── package-lock.json           # Locked dependency tree
+├── .env.example                # Required environment variables with bootstrap defaults
+├── .gitignore                  # Excludes all runtime state from the repo
+├── .dockerignore               # Excludes runtime state from the build context
 ├── assets/
 │   └── icons/
-│       └── app-icon.png    # Header icon (replaces Node-RED logo)
+│       └── app-icon.png        # Header icon (replaces Node-RED logo)
 └── editorTheme/
-    └── custom.css          # Violet color system applied to the editor UI
+    └── custom.css              # Violet color system applied to the editor UI
 ```
 
 **Ownership boundary:** the repository defines the environment. The bind mount (`./dslflow_data`) holds all runtime state. Nothing generated at runtime belongs in the repository — see [Ownership Boundary](#ownership-boundary) for the full table.
@@ -172,19 +175,16 @@ git clone <repository-url>
 cd dslflow
 
 # 2. Set credentials
-cp .env.example .env   # edit .env if you need a different username or password
+cp .env.example .env   # edit .env to change username or password
 
-# 3. Build the image
-docker compose build
-
-# 4. Start the container
+# 3. Start
 docker compose up -d
 
-# 5. Open the editor and log in
+# 4. Open the editor and log in
 # http://localhost:2000
 ```
 
-On first start, Docker creates `./dslflow_data` if it does not exist and the entrypoint fixes its ownership. Custom nodes are already in the image — no seeding or `npm install` step is needed. Node-RED will prompt you to create or clone a project. Login is required immediately on first access.
+`docker compose up -d` builds the image on first run and starts the container. No separate build step is needed. On first start, Docker creates `./dslflow_data` if it does not exist and the entrypoint fixes its ownership. Custom nodes are already in the image — no seeding or `npm install` step is required. Login is required immediately on first access.
 
 To stop without removing state:
 
@@ -200,9 +200,70 @@ docker compose logs -f
 
 ---
 
+## Compose Files
+
+Two compose files exist with distinct responsibilities. They produce identical runtime behavior — the only difference is the source of the image.
+
+### `docker-compose.yml` — build + run (default)
+
+Builds `dslflow:latest` from source and starts the container. Use this for first-time setup and any time the image needs to be rebuilt.
+
+```bash
+docker compose up -d          # build if needed, then start
+docker compose build          # build only, do not start
+docker compose up -d --build  # force rebuild and start
+```
+
+This is the only file that contains a `build:` block. It pins a single named instance (`container_name: dslflow`) on port `2000`.
+
+### `docker-compose-reuse.yml` — reuse existing image
+
+Starts a container using `dslflow:latest` without any build step. The image must already exist locally — this file contains no build configuration and will fail if the image is absent.
+
+```bash
+docker compose -f docker-compose-reuse.yml up -d
+```
+
+Designed for running multiple independent instances on the same machine. There is no hardcoded container name, and both the port and data directory are configurable per instance:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `DSLFLOW_PORT` | `2000` | Host port exposed to the browser |
+| `DSLFLOW_DATA` | `./dslflow_data` | Host path for the data bind mount |
+
+**Multiple instances example:**
+
+```bash
+# Build the image once
+docker compose build
+
+# Instance A — port 2001, its own data directory
+DSLFLOW_PORT=2001 DSLFLOW_DATA=./project_a \
+  docker compose -p project_a -f docker-compose-reuse.yml up -d
+
+# Instance B — port 2002, its own data directory
+DSLFLOW_PORT=2002 DSLFLOW_DATA=./project_b \
+  docker compose -p project_b -f docker-compose-reuse.yml up -d
+```
+
+The `-p` flag sets a unique project name per instance, preventing Docker Compose from treating them as the same service. Each instance is fully isolated — no shared state, no port conflicts, no rebuilds.
+
+### Summary
+
+| | `docker-compose.yml` | `docker-compose-reuse.yml` |
+|---|---|---|
+| Builds image | Yes | No |
+| Requires pre-built image | No | Yes |
+| Fixed container name | Yes (`dslflow`) | No |
+| Port configurable | No (fixed `2000`) | Yes (`DSLFLOW_PORT`) |
+| Data dir configurable | No (fixed `./dslflow_data`) | Yes (`DSLFLOW_DATA`) |
+| Multiple instances | No | Yes |
+
+---
+
 ## Development Workflow
 
-Flow development happens in the Node-RED editor at `http://localhost:1995`. Each developer runs their own local container instance against their own local volume.
+Flow development happens in the Node-RED editor at `http://localhost:2000`. Each developer runs their own local container instance against their own local volume.
 
 **Typical cycle:**
 
@@ -334,7 +395,8 @@ These files define the environment and must be version-controlled:
 | File / path | Purpose |
 |---|---|
 | `Dockerfile` | Image definition — system packages, Node-RED, custom nodes |
-| `docker-compose.yml` | Container configuration — ports, volume, memory, restart policy |
+| `docker-compose.yml` | Build image + run container (default entry point) |
+| `docker-compose-reuse.yml` | Run container using an already-built image; supports multiple instances |
 | `entrypoint.sh` | Container startup logic — permissions, symlinks, safe-mode |
 | `settings.js` | Node-RED runtime and editor configuration |
 | `package.json` | Node-RED node dependencies installed into the image |

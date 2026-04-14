@@ -1,3 +1,13 @@
+# docker-compose.yml — Build the image and run the container.
+#
+# Default entry point. Builds dslflow:latest from source if it does not exist,
+# then starts a single named instance on port 2000.
+#
+# Usage:
+#   docker compose up -d
+#
+# To run without rebuilding an already-built image, use docker-compose-reuse.yml.
+
 services:
   dslflow:
     build: .

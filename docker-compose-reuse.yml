@@ -1,0 +1,42 @@
+# docker-compose-reuse.yml — Run container using an already-built image.
+#
+# This file contains no build configuration. It assumes dslflow:latest already
+# exists locally. Build it first with the default compose file:
+#
+#   docker compose build
+#
+# Usage (single instance):
+#   docker compose -f docker-compose-reuse.yml up -d
+#
+# Usage (multiple instances on the same machine — each needs its own port and data dir):
+#   DSLFLOW_PORT=2001 DSLFLOW_DATA=./instance_a docker compose -f docker-compose-reuse.yml up -d
+#   DSLFLOW_PORT=2002 DSLFLOW_DATA=./instance_b docker compose -f docker-compose-reuse.yml up -d
+#
+# Configurable per-instance variables (set inline or in the environment):
+#   DSLFLOW_PORT  — host port to expose (default: 2000)
+#   DSLFLOW_DATA  — host path for the data bind mount (default: ./dslflow_data)
+#
+# Required variables (from .env or environment — same as docker-compose.yml):
+#   NODE_RED_ADMIN_USER, NODE_RED_ADMIN_PASSWORD_HASH
+
+services:
+  dslflow:
+    image: dslflow:latest
+    ports:
+      - "${DSLFLOW_PORT:-2000}:1995"
+    volumes:
+      # Data directory is configurable so multiple instances can coexist without
+      # sharing state. Defaults to ./dslflow_data for drop-in compatibility with
+      # the default compose file.
+      - ${DSLFLOW_DATA:-./dslflow_data}:/data
+    environment:
+      - PORT=1995
+      - NODE_OPTIONS=--max-old-space-size=4096
+      # Mandatory auth credentials — loaded from .env (see .env.example).
+      # The container will not start if either variable is unset.
+      - NODE_RED_ADMIN_USER
+      - NODE_RED_ADMIN_PASSWORD_HASH
+    mem_limit: 5g
+    shm_size: '256m'     # Chrome uses /dev/shm; Docker's 64 MB default causes tab crashes
+    restart: unless-stopped
+    command: ["--settings", "/app/settings.js"]
