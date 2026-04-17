@@ -4,9 +4,9 @@
     "version": "0.0.1",
     "private": true,
     "dependencies": {
-        "@inteli.city/node-red-contrib-ai-collection": "~1.0.3",
+        "@inteli.city/node-red-contrib-ai-collection": "~1.1.0",
         "@inteli.city/node-red-contrib-bucket-collection": "~1.0.0",
-        "@inteli.city/node-red-contrib-db-collection": "~1.0.1",
+        "@inteli.city/node-red-contrib-db-collection": "~1.0.2",
         "@inteli.city/node-red-contrib-drive-collection": "~1.0.0",
         "@inteli.city/node-red-contrib-exec-collection": "~2.1.0",
         "@inteli.city/node-red-contrib-http-plus": "~1.0.6",
