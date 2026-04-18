@@ -80,6 +80,17 @@ RUN PKGS=$(node -e "\
     && npm install --no-save --omit=dev --no-fund --no-update-notifier $PKGS \
     && rm /tmp/user-package.json
 
+# ── First-party DSLFlow plugins ────────────────────────────────────────────────
+# Plugins owned by this repo are copied directly into node_modules rather than
+# installed via a second `npm install` call. A second `npm install` would treat
+# all packages from the previous step as extraneous and remove them (npm dedup).
+# Direct copy is safe: Node-RED discovers plugins by scanning node_modules for
+# packages that have a "node-red" key in their package.json — no npm metadata needed.
+COPY plugins/ /app/plugins/
+RUN mkdir -p /usr/src/node-red/node_modules/@dslflow && \
+    cp -r /app/plugins/dslflow-files \
+          /usr/src/node-red/node_modules/@dslflow/node-red-plugin-files
+
 # ── Configuration (image layer — never overwritten by the bind mount) ──────────
 # settings.js and branding live in /app. Node-RED is started with
 # --settings /app/settings.js so the bind-mounted /data does not affect config.
@@ -87,11 +98,11 @@ COPY --chown=node-red:node-red settings.js /app/settings.js
 COPY --chown=node-red:node-red assets/      /app/assets/
 COPY --chown=node-red:node-red editorTheme/ /app/editorTheme/
 
-# ── Python virtual environment (image layer) ───────────────────────────────────
-RUN python3 -m venv /app/venv \
-    && /app/venv/bin/pip install --upgrade pip
-
-ENV PATH="/app/venv/bin:$PATH"
+# ── Python runtime ─────────────────────────────────────────────────────────────
+# No container-level virtual environment is created here. The image provides
+# only the Python runtime (python3 + python3-venv + python3-pip, installed
+# above). Each project owns its own `.venv`, created on demand from the Files
+# sidebar and stored inside the project directory on the bind mount.
 
 # ── Entrypoint ─────────────────────────────────────────────────────────────────
 # Runs as root: fixes /data ownership, then drops to node-red via gosu.

@@ -577,6 +577,14 @@ module.exports = {
         // os:require('os'),
     },
 
+    /** DSLFlow Project Files sidebar plugin configuration.
+     * baseDir scopes the file browser to the projects area — the plugin refuses
+     * to serve paths outside this directory.
+     */
+    dslflowFiles: {
+        baseDir: '/data/projects',
+    },
+
     /** The maximum number of messages nodes will buffer internally as part of their
      * operation. This applies across a range of nodes that operate on message sequences.
      * defaults to no limit. A value of 0 also means no limit is applied.

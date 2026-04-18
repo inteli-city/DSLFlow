@@ -40,3 +40,5 @@ logs/
 
 # ── Runtime data directory (hidden) ───────────────────────────────────────────
 .runtime_data/
+
+rawdata/

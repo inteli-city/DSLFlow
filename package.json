@@ -16,7 +16,6 @@
         "@inteli.city/node-red-contrib-template-njk": "~1.0.0",
         "@inteli.city/node-red-contrib-websocket-plus": "~1.0.0",
         "node-red-contrib-image-output": "~0.6.4",
-        "node-red-contrib-cron-plus": "~1.5.7",
-        "canvas": "^3.2.3"
+        "node-red-contrib-cron-plus": "~1.5.7"
     }
 }

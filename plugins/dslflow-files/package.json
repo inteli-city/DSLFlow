@@ -1,0 +1,16 @@
+{
+  "name": "@dslflow/node-red-plugin-files",
+  "version": "1.0.0",
+  "description": "DSLFlow Project Files sidebar — browse and edit project files",
+  "private": true,
+  "node-red": {
+    "version": ">=3.0.0",
+    "plugins": {
+      "dslflow-files": "editor/dslflow-files.html"
+    },
+    "nodes": {
+      "dslflow-files-admin": "runtime/admin.js"
+    }
+  },
+  "engines": { "node": ">=16.0.0" }
+}

@@ -1,6 +1,6 @@
 # DSLFlow
 
-A customized, containerized Node-RED environment with violet branding, Git-based project management, Python tooling, and a curated set of CLI utilities.
+An opinionated platform for running workflow-based systems across many Node-RED instances with a shared node catalog and a consistent runtime.
 
 ---
 
@@ -15,6 +15,7 @@ A customized, containerized Node-RED environment with violet branding, Git-based
 - [Compose Files](#compose-files)
 - [Development Workflow](#development-workflow)
 - [Dependency Management](#dependency-management)
+- [Node-RED Palette Packages](#node-red-palette-packages)
 - [Theming & Branding](#theming--branding)
 - [Python & External Tools](#python--external-tools)
 - [Deployment Model](#deployment-model)
@@ -26,14 +27,11 @@ A customized, containerized Node-RED environment with violet branding, Git-based
 
 ## Overview
 
-DSLFlow packages Node-RED into a reproducible Docker image that is ready for flow-based development without manual setup. It replaces the default Node-RED branding with a DSLFlow identity, enables the Node-RED Projects feature for Git-backed flow versioning, and bundles Python, PostgreSQL client, GDAL, and Tectonic for use in data and document workflows.
+DSLFlow exists to solve a simple problem: when Node-RED is used across many instances, each one evolves differently. Patterns diverge, logic is duplicated, and nothing becomes reusable across the system.
 
-The environment is split into two distinct layers:
+DSLFlow turns Node-RED into a shared execution environment with a common language. Instead of rebuilding the same patterns in every project, flows are composed from a fixed set of reusable operations, so systems remain consistent and understandable as they grow.
 
-- **Image** — defines the runtime (Node-RED, system tools, configuration, Python, pre-installed packages). Rebuilt from source; stateless.
-- **Volume** — holds all Node-RED state (projects, flows, runtime config). Persists across container rebuilds.
-
-Cloning this repository and running `docker compose up` produces a working Node-RED instance. Destroying and recreating the container does not lose flows or project history.
+Node-RED and Docker provide the runtime and packaging. DSLFlow adds the constraints — defining what exists, how it behaves, and what every instance has in common.
 
 ---
 
@@ -43,7 +41,7 @@ Cloning this repository and running `docker compose up` produces a working Node-
 - **Persistent bind mount** — `./dslflow_data` is mounted at `/data`; flows, projects, and git repos survive container recreations and are directly accessible on the host
 - **Node-RED Projects enabled** — each project is a Git repository managed by the editor, with manual commit mode
 - **Custom branding** — editor title, header icon, and UI color system replaced with DSLFlow violet theme
-- **Python execution support** — a virtual environment at `/app/venv` is baked into the image
+- **Python execution support** — `python3`, `python3-venv`, and `python3-pip` are installed in the image; each project creates and manages its own `.venv` from the Project Files sidebar
 - **Extended CLI tooling** — `psql`, `ogr2ogr` (GDAL), and `tectonic` (LaTeX compiler) are available in the container
 
 ---
@@ -58,7 +56,6 @@ Cloning this repository and running `docker compose up` produces a working Node-
 │    settings.js      Node-RED configuration                 │
 │    assets/          branding (icon)                        │
 │    editorTheme/     custom CSS                             │
-│    venv/            Python virtual environment             │
 │                                                            │
 │  /usr/src/node-red/node_modules/                           │
 │    @inteli.city/*   pre-installed custom nodes             │
@@ -289,6 +286,42 @@ Resolving merge conflicts in `flows.json` is difficult because the format is a f
 
 ## Dependency Management
 
+Project-level dependencies are **manifests, not installers**. Both `requirements.txt` (Python) and `package.json` (Node.js) describe what a project needs, but nothing is installed until the user explicitly triggers it from the Project Files sidebar. There is no auto-install on file creation, on file change, or on project switch.
+
+All actions are scoped to the current project. Installing dependencies in project A has no effect on project B, on the Node-RED runtime, or on anything in the container image.
+
+### Python — `requirements.txt`
+
+`requirements.txt` lists the Python packages the project needs. It lives at `<project>/requirements.txt` and is installed into the project's own `.venv` at `<project>/.venv`.
+
+- The project must have a `.venv` first (created from the venv bar in the Project Files sidebar — see [Python & External Tools](#python--external-tools)).
+- Right-click `requirements.txt` → **Install Python libraries**.
+- Packages install into `<project>/.venv` only. Every project has its own environment; no two projects share a package set.
+
+### Node.js — `package.json`
+
+`package.json` lists the Node.js packages the project needs. It lives at `<project>/package.json`; modules install into `<project>/node_modules`.
+
+- Right-click the project-root `package.json` → **Install Node libraries**.
+- Nested `package.json` files (inside subdirectories) are ignored — only the project root manifest is actionable.
+- Packages install into `<project>/node_modules` only. The action never installs global npm packages, never modifies `/usr/src/node-red/node_modules`, and does not touch `/data/node_modules`.
+
+### Project dependencies vs platform dependencies
+
+Two dependency layers coexist in the system. They are separate concerns and should not be confused:
+
+| Layer | Declared in | Scope | Managed by |
+|---|---|---|---|
+| **Project** — Python | `<project>/requirements.txt` | that project's `.venv` | User, via Project Files sidebar |
+| **Project** — Node.js | `<project>/package.json` | that project's `node_modules` | User, via Project Files sidebar |
+| **Platform** — Node-RED palette | repo-root `package.json`, Palette Manager | every project in the container | Maintainer, at image-build or runtime — see [Node-RED Palette Packages](#node-red-palette-packages) |
+
+Platform-level changes require a rebuild or a Palette Manager action. Project-level changes live entirely inside the project directory on the bind mount and are invisible to every other project.
+
+---
+
+## Node-RED Palette Packages
+
 Node-RED node packages are declared in `package.json`. During the Docker build, they are installed into `/usr/src/node-red/node_modules/` — the same directory Node-RED uses for its own packages. Node-RED discovers them as peer packages without any runtime install step.
 
 **To add or update a dependency:**
@@ -334,25 +367,22 @@ To change the color scheme, update `editorTheme/custom.css` and rebuild the imag
 
 ## Python & External Tools
 
-**Python virtual environment:**
+**Project-local virtual environments:**
 
-The venv is built into the image at `/app/venv` and is always available regardless of volume state.
+Python environments are per-project. The image ships only the Python runtime (`python3`, `python3-venv`, `python3-pip`); there is no shared container-level venv and no automatic fallback. Each project owns a `.venv` at `<project>/.venv`, created explicitly by the user from the Project Files sidebar.
 
-```dockerfile
-ENV PATH="/app/venv/bin:$PATH"
-```
+Workflow:
 
-To add Python packages, extend the Dockerfile:
+1. Open the Project Files sidebar with an active project. If no environment exists, the venv bar shows **Create**.
+2. **Create** runs `/usr/bin/python3 -m venv <project>/.venv` and writes an empty `requirements.txt` into the project root.
+3. Edit `requirements.txt` with the packages the project needs.
+4. Right-click `requirements.txt` → **Install Python libraries** to run `<project>/.venv/bin/pip install -r requirements.txt`.
 
-```dockerfile
-RUN /app/venv/bin/pip install pandas numpy
-```
-
-Then rebuild the image.
+Each project's dependencies are fully isolated. Deleting `.venv/` and pressing the refresh button returns the project to the uncreated state.
 
 **Intended usage pattern:**
 
-Node-RED orchestrates Python execution rather than running Python inline. Invoke scripts with the exec node using `/app/venv/bin/python`. This keeps heavy computation outside the Node.js event loop and makes scripts independently testable.
+Node-RED orchestrates Python execution rather than running Python inline. Invoke scripts from an exec node using the project's own interpreter — e.g. `/data/projects/<name>/.venv/bin/python script.py`. This keeps heavy computation outside the Node.js event loop, makes scripts independently testable, and ensures that projects never share a package set.
 
 **Available CLI tools:**
 
