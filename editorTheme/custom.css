@@ -25,3 +25,18 @@
 #red-ui-header ul#red-ui-header-button-deploy-options-submenu li a img {
   filter: hue-rotate(270deg) saturate(1.3);
 }
+
+/* Login page: scale the DSLFlow logo to a visible size. The login asset
+   (dslflow-logo.png) is already cropped tight; CSS just picks a target size.
+   The parent div has an inline `style="width: 250px"`, so we widen its slot
+   first, then let the image fill it at 100%. */
+#node-dialog-login > div:first-child {
+  width: 260px !important;
+  flex-grow: 0 !important;
+}
+#node-dialog-login-image {
+  width: 100% !important;
+  height: auto !important;
+  max-width: none !important;
+  display: block;
+}

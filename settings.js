@@ -20,6 +20,20 @@
  *
  **/
 
+// Shared favicon override — intercepts GET /favicon.ico on both the admin app
+// (the editor) and the node app (every route served by HTTP-in/http-plus-in).
+// Without this, Node-RED's editor-client ships its own /favicon.ico which every
+// non-editor tab would fall back to.
+const path = require('path');
+const DSLFLOW_FAVICON = path.join(__dirname, 'assets', 'icons', 'favicon.ico');
+function serveDslflowFavicon(req, res, next) {
+    if (req.path === '/favicon.ico') {
+        res.sendFile(DSLFLOW_FAVICON);
+        return;
+    }
+    next();
+}
+
 module.exports = {
 
 /*******************************************************************************
@@ -197,12 +211,7 @@ module.exports = {
      * in front of all admin http routes. For example, to set custom http
      * headers. It can be a single function or an array of middleware functions.
      */
-    // httpAdminMiddleware: function(req,res,next) {
-    //    // Set the X-Frame-Options header to limit where the editor
-    //    // can be embedded
-    //    //res.set('X-Frame-Options', 'sameorigin');
-    //    next();
-    // },
+    httpAdminMiddleware: serveDslflowFavicon,
 
     /** The following property can be used to set addition options on the session
      * cookie used as part of adminAuth authentication system
@@ -240,12 +249,7 @@ module.exports = {
      * applied to all http in nodes, or any other sort of common request processing.
      * It can be a single function or an array of middleware functions.
      */
-    //httpNodeMiddleware: function(req,res,next) {
-    //    // Handle/reject the request, or pass it on to the http in node by calling next();
-    //    // Optionally skip our rawBodyParser by setting this to true;
-    //    //req.skipRawBodyParser = true;
-    //    next();
-    //},
+    httpNodeMiddleware: serveDslflowFavicon,
 
     /** When httpAdminRoot is used to move the UI to a different root path, the
      * following property can be used to identify a directory of static content
@@ -440,13 +444,24 @@ module.exports = {
      */
     editorTheme: {
         page: {
-            title: "DSLFlow",
-            css: require('path').join(__dirname, 'editorTheme', 'custom.css')
+            title:   "DSLFlow",
+            favicon: require('path').join(__dirname, 'assets', 'icons', 'favicon.ico'),
+            css:     require('path').join(__dirname, 'editorTheme', 'custom.css')
         },
 
         header: {
             title: "DSLFlow",
-            image: require('path').join(__dirname, 'assets', 'icons', 'app-icon.png')
+            image: require('path').join(__dirname, 'assets', 'icons', 'dslflow-mark.png')
+        },
+
+        /** Login page branding. Uses the documented editorTheme.login.* slots so
+         * no Node-RED internals are patched. The dslflow-logo.png asset (mark +
+         * wordmark) is shown above the login form; the message appears centered
+         * below it.
+         */
+        login: {
+            image:   require('path').join(__dirname, 'assets', 'icons', 'dslflow-logo.png'),
+            message: "Welcome to DSLFlow"
         },
 
         /** The following property can be used to set a custom theme for the editor.

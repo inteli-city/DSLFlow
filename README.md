@@ -107,7 +107,9 @@ Node-RED and Docker provide the runtime and packaging. DSLFlow adds the constrai
 ├── .dockerignore               # Excludes runtime state from the build context
 ├── assets/
 │   └── icons/
-│       └── app-icon.png        # Header icon (replaces Node-RED logo)
+│       ├── dslflow-mark.png    # Brand mark (editor header + favicon source)
+│       ├── dslflow-logo.png    # Full logo (mark + wordmark) — login page
+│       └── favicon.ico         # Multi-size browser favicon
 └── editorTheme/
     └── custom.css              # Violet color system applied to the editor UI
 ```
@@ -349,7 +351,9 @@ Configuration lives in the image at `/app/` and is loaded via `--settings /app/s
 **`settings.js` — `editorTheme` block:**
 
 - `page.title` and `header.title` → `"DSLFlow"`
-- `header.image` → `assets/icons/app-icon.png` (resolved relative to `/app/`)
+- `header.image` → `assets/icons/dslflow-mark.png` (resolved relative to `/app/`)
+- `login.image` → `assets/icons/dslflow-logo.png`, `login.message` → "Welcome to DSLFlow"
+- `page.favicon` → `assets/icons/favicon.ico` (multi-size ICO; also served at `/favicon.ico` by a shared Express middleware in `settings.js` so http-plus-in endpoints get the same icon)
 - `page.css` → `editorTheme/custom.css` (resolved relative to `/app/`)
 
 **`editorTheme/custom.css` — violet color system:**
@@ -431,7 +435,9 @@ These files define the environment and must be version-controlled:
 | `settings.js` | Node-RED runtime and editor configuration |
 | `package.json` | Node-RED node dependencies installed into the image |
 | `package-lock.json` | Locked dependency tree for reproducible image builds |
-| `assets/icons/app-icon.png` | DSLFlow header icon |
+| `assets/icons/dslflow-mark.png` | DSLFlow brand mark — drives editor header icon and favicon source |
+| `assets/icons/dslflow-logo.png` | DSLFlow full logo (mark + wordmark) — shown on the login page |
+| `assets/icons/favicon.ico` | Multi-size browser favicon, served at `/favicon.ico` |
 | `editorTheme/custom.css` | Violet color system applied to the editor UI |
 | `README.md` | Project documentation |
 | `.env.example` | Contract for required environment variables (no secrets) |
