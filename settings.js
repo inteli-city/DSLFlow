@@ -600,6 +600,23 @@ module.exports = {
         baseDir: '/data/projects',
     },
 
+    /** DSLFlow Telemetry sidebar plugin configuration.
+     * Persistent store lives under `$userDir/.dslflow-telemetry/` (runtime
+     * state, not repository state).
+     *   slowThresholdMs  — sync delivery time that flags a node as "slow"
+     *   persistence.*    — retention for History / Usage; all bounded
+     */
+    dslflowTelemetry: {
+        slowThresholdMs: 250,
+        persistence: {
+            eventsRetentionHours:  24,   // recent events kept for drill-down
+            hourlyRetentionDays:    7,   // hourly aggregates (168 buckets max)
+            dailyRetentionDays:    90,   // daily aggregates (90 buckets max)
+            maxPersistedEvents:  2000,   // hard cap on recent-events array
+            flushIntervalSeconds:  30,   // disk write cadence when dirty
+        },
+    },
+
     /** The maximum number of messages nodes will buffer internally as part of their
      * operation. This applies across a range of nodes that operate on message sequences.
      * defaults to no limit. A value of 0 also means no limit is applied.

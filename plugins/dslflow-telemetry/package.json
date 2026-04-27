@@ -1,0 +1,16 @@
+{
+  "name": "@dslflow/node-red-plugin-telemetry",
+  "version": "1.0.0",
+  "description": "DSLFlow Telemetry sidebar — system health, recent issues, and node hotspots",
+  "private": true,
+  "node-red": {
+    "version": ">=3.0.0",
+    "plugins": {
+      "dslflow-telemetry": "editor/dslflow-telemetry.html"
+    },
+    "nodes": {
+      "dslflow-telemetry-admin": "runtime/admin.js"
+    }
+  },
+  "engines": { "node": ">=16.0.0" }
+}

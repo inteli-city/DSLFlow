@@ -46,7 +46,13 @@ RED.plugins.registerPlugin("dslflow-files", {
     var isWide         = false;          // width-based toolbar visibility flag
     var compactView    = "browser";
     var savedLeftWidth = "38%";
-    var sidebarState   = { expanded: false, originalWidth: 0, targetWidth: 0 };
+    // Shared across all DSLFlow plugins. `initialNarrow` is captured ONCE
+    // (the very first time we observe the sidebar in its non-expanded state)
+    // and is the canonical restore target — so collapse always returns to
+    // the sidebar's original default, not to whatever intermediate width
+    // the user dragged through.
+    window.__dslflowSidebar = window.__dslflowSidebar || { initialNarrow: 0 };
+    var sidebarState   = window.__dslflowSidebar;
 
     // Context menu current target
     var ctxTarget = null; // { path, type, name }
@@ -107,7 +113,8 @@ RED.plugins.registerPlugin("dslflow-files", {
     var $btnHidden     = $('<button class="red-ui-button dsff-btn-hidden"><i class="fa"></i></button>');
     var $btnNewCompact = $('<button class="red-ui-button dsff-btn-new-compact" title="New…"><i class="fa fa-plus"></i></button>');
     var $btnCollapse   = $('<button class="red-ui-button dsff-btn-collapse" title="Collapse sidebar"><i class="fa fa-chevron-right"></i></button>');
-    $leftHdr.append($baseLabel, $compactFolderLabel, $btnRefresh, $btnHidden, $btnNewCompact, $btnCollapse);
+    var $btnExpand     = $('<button class="red-ui-button dsff-btn-expand"   title="Expand sidebar"><i class="fa fa-chevron-left"></i></button>');
+    $leftHdr.append($baseLabel, $compactFolderLabel, $btnRefresh, $btnHidden, $btnNewCompact, $btnCollapse, $btnExpand);
 
     // Python venv bar — one row under the header, shown only when a project is active.
     var $venvBar    = $('<div class="dsff-venv-bar">').hide();
@@ -341,25 +348,55 @@ RED.plugins.registerPlugin("dslflow-files", {
       var currentW = $sidebar.outerWidth() || 0;
       var canvasW  = (window.innerWidth || 1400) - currentW;
       var targetW  = Math.min(Math.floor(canvasW / 2), Math.floor(window.innerWidth * 0.85));
-      if (targetW <= currentW) return;
-      sidebarState.originalWidth = currentW;
-      sidebarState.targetWidth   = targetW;
-      sidebarState.expanded      = true;
-      $root.addClass("dsff-sidebar-expanded");
+      if (targetW <= currentW) { syncSidebarExpansionClass(); return; }
+      if (!sidebarState.initialNarrow) sidebarState.initialNarrow = currentW;
       setSidebarWidth($sidebar, targetW);
+      syncSidebarExpansionClass();
     }
 
     function collapseSidebar() {
-      if (!sidebarState.expanded || !sidebarState.originalWidth) return;
       var $sidebar = getSidebar();
       if (!$sidebar.length) return;
-      var restoreW = sidebarState.originalWidth;
-      sidebarState.expanded      = false;
-      sidebarState.targetWidth   = 0;
-      sidebarState.originalWidth = 0;
-      $root.removeClass("dsff-sidebar-expanded");
+      var restoreW = sidebarState.initialNarrow ||
+        Math.min(380, Math.floor((window.innerWidth || 1400) * 0.25));
       setSidebarWidth($sidebar, restoreW);
+      syncSidebarExpansionClass();
     }
+
+    // Width-driven button visibility. Threshold is a heuristic (≥ 40% of
+    // window, 500 px floor). `initialNarrow` is captured ONCE — the first
+    // narrow width observed — so collapse always restores to the original
+    // default, not to whatever intermediate width the user dragged past
+    // before crossing the "expanded" threshold.
+    function syncSidebarExpansionClass() {
+      var $sidebar = getSidebar();
+      if (!$sidebar.length) {
+        $root.removeClass("dsff-sidebar-expanded");
+        return;
+      }
+      var w = $sidebar.outerWidth() || 0;
+      var threshold = Math.max(500, window.innerWidth * 0.4);
+      var expanded = w >= threshold;
+      if (!sidebarState.initialNarrow && w > 0 && !expanded) {
+        sidebarState.initialNarrow = w;
+      }
+      $root.toggleClass("dsff-sidebar-expanded", expanded);
+    }
+    var _resizeObserverAttached = false;
+    function ensureSidebarResizeObserver() {
+      if (_resizeObserverAttached) return;
+      var $sidebar = getSidebar();
+      if (!$sidebar.length || typeof ResizeObserver === "undefined") return;
+      _resizeObserverAttached = true;
+      new ResizeObserver(function () { syncSidebarExpansionClass(); }).observe($sidebar[0]);
+    }
+    // Cross-plugin sync: NR emits "sidebar:resize" whenever the sidebar
+    // width changes — including from the OTHER plugin's setSidebarWidth or
+    // from the user dragging the divider. By listening here (regardless of
+    // whether THIS tab is currently shown), our class stays correct even
+    // while we're hidden, so when the user switches to us the buttons are
+    // already accurate.
+    RED.events.on("sidebar:resize", function () { syncSidebarExpansionClass(); });
 
     // ── 6. Editor behavior ───────────────────────────────────────────────────
 
@@ -1335,6 +1372,7 @@ RED.plugins.registerPlugin("dslflow-files", {
     $menuNewDir.on("click",  doNewFolder);
     $btnBack.on("click", function () { if (isCompact) showBrowserPanel(); });
     $btnCollapse.on("click", collapseSidebar);
+    $btnExpand.on("click", tryExpandSidebar);
     $btnNewCompact.on("click", function (ev) { ev.stopPropagation(); showCompactMenu(ev); });
     $btnWrap.on("click", function () {
       var on = !dsffWrapEnabled();
@@ -1497,6 +1535,11 @@ RED.plugins.registerPlugin("dslflow-files", {
         applyMode(true);
         layoutEditorSoon();
         if (currentFile) restorePositionFor(currentFile, { guardMs: 700 });
+        // Width-driven expand/collapse button sync — works regardless of
+        // which plugin manipulated the sidebar (or whether the user dragged
+        // the divider). One-time observer attaches on first show.
+        ensureSidebarResizeObserver();
+        syncSidebarExpansionClass();
       },
     });
 

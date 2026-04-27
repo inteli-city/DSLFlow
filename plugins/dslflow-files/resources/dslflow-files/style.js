@@ -51,6 +51,8 @@
     /* ── Collapse-sidebar button (hidden until sidebar is expanded by us) ───── */
     .dsff-btn-collapse                         { display: none !important; }
     .dsff-sidebar-expanded .dsff-btn-collapse  { display: inline-block !important; }
+    .dsff-btn-expand                           { display: inline-block !important; }
+    .dsff-sidebar-expanded .dsff-btn-expand    { display: none !important; }
 
     /* ── Compact-only elements (hidden by default, shown by mode classes) ────── */
     .dsff-compact-folder,
