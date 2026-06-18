@@ -1,13 +1,9 @@
 :root {
-  /* === Brand (primary) === */
-  --dslflow-primary: #6D28D9;          /* base */
-  --dslflow-primary-hover: #5B21B6;    /* hover */
-  --dslflow-primary-active: #4C1D95;   /* pressed */
-
-  /* === Subtle accent (less aggressive usage) === */
-  --dslflow-accent-soft: #8B5CF6;      /* for highlights, not buttons */
-
-  /* === Neutral UI support === */
+  /* === Brand === */
+  --dslflow-primary: #6D28D9;
+  --dslflow-primary-hover: #5B21B6;
+  --dslflow-primary-active: #4C1D95;
+  --dslflow-accent-soft: #8B5CF6;
   --dslflow-focus-ring: rgba(109, 40, 217, 0.35);
 
   /* === Node-RED mappings === */
@@ -21,19 +17,28 @@
   --red-ui-workspace-button-background-primary-hover: var(--dslflow-primary-hover);
 }
 
-/* Deploy menu icons: shift SVG fill toward violet */
-#red-ui-header ul#red-ui-header-button-deploy-options-submenu li a img {
+/* Deploy dropdown icons: Node-RED 5 adds more specific filters, so match them. */
+#red-ui-header ul#red-ui-header-button-deploy-options-submenu li a img,
+#red-ui-header ul#red-ui-header-button-deploy-options-submenu li a.red-ui-menu-toggle-item img,
+#red-ui-header ul#red-ui-header-button-deploy-options-submenu li a.active img {
   filter: hue-rotate(270deg) saturate(1.3);
 }
 
-/* Login page: scale the DSLFlow logo to a visible size. The login asset
-   (dslflow-logo.png) is already cropped tight; CSS just picks a target size.
-   The parent div has an inline `style="width: 250px"`, so we widen its slot
-   first, then let the image fill it at 100%. */
+/* Optional: keep Deploy menu hover aligned with DSLFlow branding. */
+#red-ui-header #red-ui-header-button-deploy-options-submenu li a:hover {
+  background: rgba(109, 40, 217, 0.08);
+}
+
+#red-ui-header #red-ui-header-button-deploy-options-submenu li a:focus {
+  outline-color: var(--dslflow-focus-ring);
+}
+
+/* Login page logo sizing. */
 #node-dialog-login > div:first-child {
   width: 260px !important;
   flex-grow: 0 !important;
 }
+
 #node-dialog-login-image {
   width: 100% !important;
   height: auto !important;

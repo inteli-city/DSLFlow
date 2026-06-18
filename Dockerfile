@@ -1,4 +1,4 @@
-FROM nodered/node-red:4.1-debian
+FROM nodered/node-red:5.0-debian
 
 USER root
 
@@ -89,9 +89,7 @@ RUN PKGS=$(node -e "\
 COPY plugins/ /app/plugins/
 RUN mkdir -p /usr/src/node-red/node_modules/@dslflow && \
     cp -r /app/plugins/dslflow-files \
-          /usr/src/node-red/node_modules/@dslflow/node-red-plugin-files && \
-    cp -r /app/plugins/dslflow-telemetry \
-          /usr/src/node-red/node_modules/@dslflow/node-red-plugin-telemetry
+          /usr/src/node-red/node_modules/@dslflow/node-red-plugin-files
 
 # ── Configuration (image layer — never overwritten by the bind mount) ──────────
 # settings.js and branding live in /app. Node-RED is started with
