@@ -80,17 +80,6 @@ RUN PKGS=$(node -e "\
     && npm install --no-save --omit=dev --no-fund --no-update-notifier $PKGS \
     && rm /tmp/user-package.json
 
-# ── First-party DSLFlow plugins ────────────────────────────────────────────────
-# Plugins owned by this repo are copied directly into node_modules rather than
-# installed via a second `npm install` call. A second `npm install` would treat
-# all packages from the previous step as extraneous and remove them (npm dedup).
-# Direct copy is safe: Node-RED discovers plugins by scanning node_modules for
-# packages that have a "node-red" key in their package.json — no npm metadata needed.
-COPY plugins/ /app/plugins/
-RUN mkdir -p /usr/src/node-red/node_modules/@dslflow && \
-    cp -r /app/plugins/dslflow-files \
-          /usr/src/node-red/node_modules/@dslflow/node-red-plugin-files
-
 # ── Configuration (image layer — never overwritten by the bind mount) ──────────
 # settings.js and branding live in /app. Node-RED is started with
 # --settings /app/settings.js so the bind-mounted /data does not affect config.
