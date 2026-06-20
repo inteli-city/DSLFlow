@@ -16,7 +16,7 @@
         "@inteli.city/node-red-contrib-template-njk": "~1.0.0",
         "@inteli.city/node-red-contrib-websocket-plus": "~1.0.1",
         "@inteli.city/node-red-plugin-project-files": "~1.0.3",
-        "@inteli.city/node-red-plugin-telemetry": "~1.1.2",
+        "@inteli.city/node-red-plugin-telemetry": "~1.1.3",
         "node-red-contrib-image-output": "~0.6.4",
         "node-red-contrib-cron-plus": "~1.5.7"
     }
