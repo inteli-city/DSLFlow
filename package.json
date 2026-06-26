@@ -6,7 +6,7 @@
     "dependencies": {
         "@inteli.city/node-red-contrib-ai-collection": "~1.1.1",
         "@inteli.city/node-red-contrib-bucket-collection": "~2.0.1",
-        "@inteli.city/node-red-contrib-db-collection": "~1.1.6",
+        "@inteli.city/node-red-contrib-db-collection": "~1.1.7",
         "@inteli.city/node-red-contrib-drive-collection": "~1.0.2",
         "@inteli.city/node-red-contrib-exec-collection": "~2.1.6",
         "@inteli.city/node-red-contrib-http-plus": "~2.0.1",
